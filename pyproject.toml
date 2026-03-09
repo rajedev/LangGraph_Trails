@@ -1,0 +1,17 @@
+[project]
+name = "langgraph-trails"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "community>=1.0.0b1",
+    "dotenv>=0.9.9",
+    "ipykernel>=7.2.0",
+    "langchain>=1.2.10",
+    "langchain-community>=0.4.1",
+    "langgraph>=1.0.10",
+    "ollama>=0.6.1",
+]
+
+[tool.uv]
+native-tls = true
