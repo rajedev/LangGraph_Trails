@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplat
 from langgraph.graph import StateGraph, START, END
 
 
-def provide_llm(model: str, provider: str = "ollama", temperature: int = 0):
+def provide_llm(model: str, provider: str = "ollama", temperature: float = 0.0):
     return init_chat_model(model=model, model_provider=provider, temperature=temperature)
 
 
@@ -26,7 +26,7 @@ IMPROVE_DESCRIPTION = "improve_description"
 
 GENERATOR_PROMPT = ChatPromptTemplate.from_messages([
     HumanMessagePromptTemplate.from_template(
-        "You are an intelligent assistant to generate the content description for the Title: {title}, in 3 to 4 lines")
+        "You are an intelligent assistant to generate the content description for the Title: {title}, in 1 to 2 lines")
 ])
 
 EVALUATOR_PROMPT = ChatPromptTemplate.from_messages([
@@ -68,12 +68,10 @@ def _parse_evaluator_score(text: str, default: int = 5) -> int:
 
 
 def is_article_to_be_improved(state: ArticleReflectionState) -> bool:
-    """True → improve then re-evaluate. False → keep current description and end."""
-    if state["score"] >= PASSING_EVAL_SCORE:
-        print(" Score reached the level")
-        return False
-    if state["iteration_took"] > MAX_IMPROVE_ROUNDS_BEFORE_ACCEPT:
-        print(" Max. iteration tried to refine")
+    """False when good enough: if either exit condition passes, keep the current result."""
+    score_passed = state["score"] >= PASSING_EVAL_SCORE
+    iteration_cap_reached = state["iteration_took"] > MAX_IMPROVE_ROUNDS_BEFORE_ACCEPT
+    if score_passed or iteration_cap_reached:
         return False
     return True
 
@@ -151,4 +149,5 @@ def run_agent():
     # display(Image(wf_app.get_graph().draw_mermaid()))
 
 
-run_agent()
+if __name__ == "__main__":
+    run_agent()
