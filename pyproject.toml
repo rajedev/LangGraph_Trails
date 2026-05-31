@@ -17,6 +17,7 @@ dependencies = [
     "langsmith>=0.7.14",
     "marshmallow>=3.26.2",
     "ollama>=0.6.1",
+    "pydantic>=2.12.5",
     "pydantic-core>=2.41.5",
     "tornado>=6.5.4",
 ]
