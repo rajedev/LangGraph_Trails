@@ -833,6 +833,7 @@ dependencies = [
     { name = "ollama" },
     { name = "pydantic" },
     { name = "pydantic-core" },
+    { name = "requests" },
     { name = "tornado" },
 ]
 
@@ -853,6 +854,7 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.6.1" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pydantic-core", specifier = ">=2.41.5" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "tornado", specifier = ">=6.5.4" },
 ]
 
