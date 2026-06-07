@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "agent": "./Practice_Reflection_QA.py:wf_app",
+    "currency_agent": "./Practice_Reasoning.ipynb:graph"
+  },
+  "env": ".env"
+}

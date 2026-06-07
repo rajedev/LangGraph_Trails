@@ -8,7 +8,10 @@ import re
 import io
 from typing import TypedDict
 
+from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
+
+load_dotenv()
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langgraph.graph import StateGraph, START, END
 from PIL import Image
@@ -134,7 +137,14 @@ def define_workflow_graph():
     graph.add_edge(IMPROVE_DESCRIPTION, EVALUATE_DESCRIPTION)
     return graph
 
-def render_store_graph(app:CompiledStateGraph):
+wf_app = define_workflow_graph().compile()
+
+configuration = {
+    "configurable": {"thread_id": "user-anga"}
+}
+
+
+def render_store_graph(app: CompiledStateGraph):
     try:
         graph_bytes = app.get_graph().draw_mermaid_png()
 
@@ -154,8 +164,7 @@ def render_store_graph(app:CompiledStateGraph):
 
 
 def run_agent():
-    wf_app = define_workflow_graph().compile()
-    #render_store_graph(wf_app)
+    # render_store_graph(wf_app)
     while True:
         title_input = str(input("\n Article Title Please: "))
         if title_input == "/bye":
@@ -168,7 +177,7 @@ def run_agent():
             "score": 0,
             "iteration_took": 0
         }
-        result = wf_app.invoke(initial_state)
+        result = wf_app.invoke(initial_state, config=configuration)
         print(f"\n Result: {result}")
 
 
