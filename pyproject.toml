@@ -11,6 +11,7 @@ dependencies = [
     "langchain>=1.2.10",
     "langchain-community>=0.4.1",
     "langchain-core>=1.2.17",
+    "langchain-nvidia-ai-endpoints>=1.4.1",
     "langchain-ollama>=1.0.1",
     "langgraph>=1.0.10",
     "langgraph-api>=0.9.0",
