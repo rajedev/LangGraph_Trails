@@ -4,12 +4,13 @@ Date: 11 May 2026
 Description: Building Reflection Agent for QA & Improve with the feedback
 """
 
-import re
 import io
+import re
 from typing import TypedDict
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
+from pydantic import BaseModel, Field
 
 load_dotenv()
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
@@ -20,11 +21,6 @@ from langgraph.graph.state import CompiledStateGraph
 
 def provide_llm(model: str, provider: str = "ollama", temperature: float = 0.0):
     return init_chat_model(model=model, model_provider=provider, temperature=temperature)
-
-
-generate_llm = provide_llm(model="mistral:latest")
-evaluate_llm = provide_llm(model="gpt-oss:20b")
-improve_llm = provide_llm(model="llama3.2:latest")
 
 GENERATE_DESCRIPTION = "generate_description"
 EVALUATE_DESCRIPTION = "evaluate_description"
@@ -54,6 +50,11 @@ PASSING_EVAL_SCORE = 9  # score >= this → use result, done
 MAX_IMPROVE_ROUNDS_BEFORE_ACCEPT = 2
 
 
+class FeedbackReport(BaseModel):
+    score: int = Field(ge=1, le=10, description="provide evaluation SCORE (1–10); clamp to valid range.")
+    feedback: str = Field(..., description="evaluate the content description generate with 1 to 2")
+
+
 class ArticleReflectionState(TypedDict):
     title: str
     description: str
@@ -61,7 +62,11 @@ class ArticleReflectionState(TypedDict):
     score: int
     iteration_took: int
 
+generate_llm = provide_llm(model="mistral:latest")
+evaluate_llm = provide_llm(model="gpt-oss:20b").with_structured_output(FeedbackReport)
+improve_llm = provide_llm(model="llama3.2:latest")
 
+## Deprecated -- No more manual parsing
 def _parse_evaluator_score(text: str, default: int = 5) -> int:
     """Extract SCORE (1–10) from evaluator LLM output; clamp to valid range."""
     if not text:
@@ -100,11 +105,11 @@ def evaluate_article_description(state: ArticleReflectionState):
     article_title = state["title"]
     article_desc = state["description"]
     chain = EVALUATOR_PROMPT | evaluate_llm
-    eval_result = chain.invoke({"title": article_title, "description": article_desc}).content
-    state["feedback"] = eval_result
-    score = _parse_evaluator_score(eval_result)
-    state["score"] = score
-    print(f" Parsed score: {score}")
+    eval_result:FeedbackReport = chain.invoke({"title": article_title, "description": article_desc})
+    state["feedback"] = eval_result.feedback
+    #score = _parse_evaluator_score(eval_result)
+    state["score"] = eval_result.score
+    print(f" Parsed score: {eval_result.score}")
     return state
 
 
@@ -136,6 +141,7 @@ def define_workflow_graph():
     })
     graph.add_edge(IMPROVE_DESCRIPTION, EVALUATE_DESCRIPTION)
     return graph
+
 
 wf_app = define_workflow_graph().compile()
 
