@@ -80,8 +80,9 @@ def execute_graph():
                 print(co[0])
             continue
         if usr_input == "snap":
-            snap = graph.get_state(config=config)
-            print(snap)
+            snap = list(graph.get_state_history(config=config))
+            for s in snap:
+                print(s.values)
             continue
         if usr_input in ["/bye", "exit", "quit"]:
             break
