@@ -60,12 +60,19 @@ def workflow_graph():
     wf_graph.add_edge(START, "init_chat")
     wf_graph.add_edge("init_chat", END)
 
-    # return wf_graph.compile()
-    return wf_graph.compile(checkpointer=checkpointer)
+    return wf_graph
+
+
+def get_graph_for_cli():
+    return workflow_graph().compile(checkpointer=checkpointer)
+
+
+def get_graph_for_studio():
+    return workflow_graph().compile()
 
 
 def execute_graph():
-    graph = workflow_graph()
+    graph = get_graph_for_cli()
     global exception_action
     while True:
         usr_input = str(input("User: "))

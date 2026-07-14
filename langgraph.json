@@ -2,7 +2,7 @@
   "dependencies": ["."],
   "graphs": {
     "agent": "./Practice_Reflection_QA.py:wf_app",
-    "currency_agent": "./Practice_Reasoning.ipynb:graph"
+    "lg_s_practice_light": "./Practice_Light.py:get_graph_for_studio"
   },
   "env": ".env"
 }
