@@ -15,6 +15,7 @@ from langgraph.graph.message import add_messages
 load_dotenv()
 llm = init_chat_model(model="nvidia/nemotron-3-nano-30b-a3b", model_provider="nvidia", temperature=0.0)
 config = {
+    "run_name": "Practice Light",
     "configurable": {
         "thread_id": "usr_1"
     }
@@ -35,19 +36,21 @@ class MsgState(TypedDict):
 
 
 def chat_here(state: MsgState):
-    u_msg = state['messages']
-    log = u_msg[-1].content.split("-")
-    # print(f"log={log}")
-    u_msg = log[-1]
+    messages = list(state["messages"])
+    last = messages[-1]
+    last_text = last.content if isinstance(last.content, str) else str(last.content)
+    # Practice protocol: "exception-<prompt>" raises once; strip prefix for the model.
+    log = last_text.split("-")
     global exception_action
-    if exception_action == True and "exception" in log:
+    if exception_action and "exception" in log[0]:
         raise Exception("Err Checker -- Manual Invoke")
-    # convo.extend(u_msg)
-    # print(u_msg)
-    res = llm.invoke(u_msg)
-    # print(res)
+    if len(log) > 1 and log[0].strip() == "exception":
+        messages = messages[:-1] + [HumanMessage(content=log[-1].strip())]
+
+    # Pass full history — checkpointer alone does not give the LLM memory.
+    res = llm.invoke(messages)
     return {
-        'messages': [res]
+        "messages": [res]
     }
 
 
@@ -68,7 +71,7 @@ def execute_graph():
         usr_input = str(input("User: "))
         us = usr_input.split("-")
         # print(us)
-        if "exception " in us:
+        if "exception" in us[0].strip():
             exception_action = True
         if usr_input == "er":
             exception_action = False
