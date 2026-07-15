@@ -56,8 +56,8 @@ load_dotenv(override=True)
 #     model_provider="nvidia",
 #     temperature=0.0)
 
-llm = init_chat_model(model="gpt-oss:20b", model_provider="ollama", temperature=0)
-
+#llm = init_chat_model(model="gpt-oss:20b", model_provider="ollama", temperature=0)
+llm = init_chat_model(model="nvidia/nemotron-3-nano-30b-a3b", model_provider="nvidia", temperature=0.0)
 
 class UserMsg(MessagesState):
     pass
@@ -149,6 +149,7 @@ def build_workflow():
 
 if __name__ == "__main__":
     graph = build_workflow().compile()
+    print(graph.get_graph().draw_ascii())
     while True:
         us_input = input("User: ('/bye' to exit): ")
         if us_input == "/bye":
