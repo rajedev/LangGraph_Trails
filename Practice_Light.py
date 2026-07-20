@@ -3,18 +3,21 @@ Author: Rajendhiran Easu
 Date: 12 July 2026
 Description: 
 """
-from typing import Annotated, TypedDict
+from dataclasses import dataclass
+from typing import Annotated, TypedDict, Optional
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, BaseMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import START, END, StateGraph
 from langgraph.graph.message import add_messages
+from langgraph.runtime import Runtime
 
 load_dotenv()
 llm = init_chat_model(model="nvidia/nemotron-3-nano-30b-a3b", model_provider="nvidia", temperature=0.0)
-config = {
+_config = {
     "run_name": "Practice Light",
     "configurable": {
         "thread_id": "usr_1"
@@ -28,6 +31,13 @@ checkpointer = InMemorySaver()
 exception_action = True
 
 
+@dataclass
+class ContextData:
+    user_id: str
+    app_db_with: str = "postgres"
+    app_metrics_with: str = "cloudWatch"
+
+
 # manual conversation w/o checkpointer and config - checks
 # convo = []
 
@@ -35,7 +45,12 @@ class MsgState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
 
-def chat_here(state: MsgState):
+def chat_here(state: MsgState, runtime: Runtime[ContextData], config: Optional[RunnableConfig] = None):
+    # def chat_here(state: MsgState):
+    print(f"Config Values: {config.get("configurable", {}).get("thread_id")}")
+    rt_ctx = runtime.context
+    print(f"Context data {rt_ctx}")
+    print(f"Context data {rt_ctx.user_id} | {rt_ctx.app_db_with} | {rt_ctx.app_metrics_with}")
     messages = list(state["messages"])
     last = messages[-1]
     last_text = last.content if isinstance(last.content, str) else str(last.content)
@@ -55,7 +70,7 @@ def chat_here(state: MsgState):
 
 
 def workflow_graph():
-    wf_graph = StateGraph(MsgState)
+    wf_graph = StateGraph(MsgState, context_schema=ContextData)
     wf_graph.add_node("init_chat", chat_here)
     wf_graph.add_edge(START, "init_chat")
     wf_graph.add_edge("init_chat", END)
@@ -73,6 +88,7 @@ def get_graph_for_studio():
 
 def execute_graph():
     graph = get_graph_for_cli()
+    context_data = ContextData(user_id="usr_1", app_metrics_with="firestore")
     global exception_action
     while True:
         usr_input = str(input("User: "))
@@ -84,13 +100,13 @@ def execute_graph():
             exception_action = False
         if usr_input == "thread":
             # conversation = checkpointer.list(None)
-            conversation = checkpointer.list(config=config)
+            conversation = checkpointer.list(config=_config)
             for co in conversation:
                 # print(co[1]['channel_values'])
                 print(co[0])
             continue
         if usr_input == "snap":
-            snap = list(graph.get_state_history(config=config))
+            snap = list(graph.get_state_history(config=_config))
             for s in snap:
                 print(s.values)
             continue
@@ -101,7 +117,8 @@ def execute_graph():
             # "messages": convo + [HumanMessage(content=usr_input)]
         }
         try:
-            result = graph.invoke(input=convo_input, config=config)
+            result = graph.invoke(input=convo_input, config=_config, context=context_data)
+            # result = graph.invoke(input=convo_input, config=config)
             # result = graph.invoke(input=initial_state)
             print(f"AI: {result["messages"][-1].content}")
         except Exception as e:
